@@ -1,6 +1,13 @@
 import React, { useState } from 'react';
 
-import { Modal } from 'react-native';
+import {
+  Keyboard,
+  Modal,
+  TouchableWithoutFeedback,
+  Alert,
+} from 'react-native';
+
+import {useForm} from 'react-hook-form';
 
 import {
   Container,
@@ -11,12 +18,30 @@ import {
   TransactionTypes,
 } from './styles';
 
-import { Input } from '../../components/Form/Input';
+import * as Yup from 'yup';
+import { yupResolver } from '@hookform/resolvers/yup';
+
+import { InputForm } from '../../components/Form/InputForm';
 import { Button } from '../../components/Form/Button';
 import { TransactionTypeButton } from '../../components/Form/TransactionTypeButton';
 import { CategorySelectButton } from '../../components/Form/CategorySelectButton';
 
 import { CategorySelect } from '../CategorySelect';
+
+interface FormData {
+  name: string;
+  amount: string;
+}
+
+const schema = Yup.object().shape({
+  name: Yup
+  .string()
+  .required('Nome é obrigatório'),
+  amount: Yup
+  .number()
+  .typeError('Informe um valor numérico')
+  .positive('Informe um valor positivo')
+});
 
 export function Register() {
   const [category, setCategory] = useState({
@@ -25,6 +50,12 @@ export function Register() {
   });
   const [transactionType, setTransactionType] = useState('');
   const [categoryModalOpen, setCategoryModalOpen] = useState(false);
+
+  const {
+    control,
+    handleSubmit,
+    formState: { errors }
+  } = useForm({resolver: yupResolver(schema)});
 
   function handleTransactionTypeSelect(type: 'up' | 'down') {
     setTransactionType(type);
@@ -38,18 +69,42 @@ export function Register() {
     setCategoryModalOpen(false);
   }
 
+  function handleRegister(form: FormData) {
+    if(!transactionType) return Alert.alert('Erro', 'Selecione um tipo de transação');
+
+    if(category.key === 'category') return Alert.alert('Erro', 'Selecione uma categoria');
+
+    const data = {
+      name: form.name,
+      amount: form.amount,
+      transactionType,
+      category: category.key
+    }
+    console.log(data);
+  }
+
   return (
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
     <Container>
       <Header>
         <Title>Cadastro</Title>
       </Header>
       <Form>
         <Fields>
-          <Input
+          <InputForm
+            name="name"
+            control={control}
             placeholder="Nome"
+            autoCapitalize="sentences"
+            autoCorrect={false}
+            error={errors.name && errors.name.message}
           />
-          <Input
+          <InputForm
+            name="amount"
+            control={control}
             placeholder="Preço"
+            keyboardType="numeric"
+            error={errors.amount && errors.amount.message}
           />
           <TransactionTypes>
             <TransactionTypeButton
@@ -70,7 +125,10 @@ export function Register() {
             onPress={handleOpenSelectCategoryModal}
           />
         </Fields>
-        <Button title="enviar"/>
+        <Button
+          title="Enviar"
+          onPress={handleSubmit(handleRegister)}
+        />
       </Form>
 
       <Modal visible={categoryModalOpen}>
@@ -81,5 +139,6 @@ export function Register() {
         />
       </Modal>
     </Container>
+    </TouchableWithoutFeedback>
   );
 }
