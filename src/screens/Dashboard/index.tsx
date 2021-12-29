@@ -1,8 +1,9 @@
-import React from 'react';
-import { getBottomSpace } from 'react-native-iphone-x-helper';
+import React, {useEffect, useState} from 'react';
 
 import { HighlightCard } from '../../components/HighlightCard';
 import { TransactionCard, TransactionCardProps } from '../../components/TransactionCard';
+
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import {
   Container,
@@ -17,7 +18,8 @@ import {
   HighlightCards,
   Transactions,
   Title,
-  TransactionsList
+  TransactionsList,
+  LogoutButton,
 } from './styles';
 
 export interface DataListProps extends TransactionCardProps {
@@ -25,32 +27,39 @@ export interface DataListProps extends TransactionCardProps {
 }
 
 export function Dashboard () {
-  const data: DataListProps[] = [
-    {
-      id: '1',
-      type: 'positive',
-      title: "Venda de TV",
-      amount: "R$ 1.000,00",
-      category: { name: 'Venda', icon: 'shopping-bag'},
-      date: "Hoje às 18:00",
-    },
-    {
-      id: '2',
-      type: 'negative',
-      title: "Jantar",
-      amount: "R$ 1.000,00",
-      category: { name: 'Alimentação', icon: 'coffee'},
-      date: "Hoje às 18:00",
-    },
-    {
-      id: '3',
-      type: 'positive',
-      title: "Salário",
-      amount: "R$ 1.000,00",
-      category: { name: 'Salário', icon: 'dollar-sign'},
-      date: "Hoje às 18:00",
-    },
-  ]
+  const [data, setData] = useState<DataListProps[]>([]);
+
+  async function loadTransactions() {
+    const dataKey = '@gofinance:transactions';
+    const response = await AsyncStorage.getItem(dataKey);
+    const transactions = response ? JSON.parse(response) : [];
+    const transactionsFormatted: DataListProps[] = transactions
+    .map((item: DataListProps) => {
+      const amount = Number(item.amount).toLocaleString('pt-BR', {
+        style: 'currency',
+        currency: 'BRL',
+      });
+      const date = Intl.DateTimeFormat('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+      }).format(new Date(item.date));
+      return {
+        id: item.id,
+        name: item.name,
+        amount,
+        type: item.type,
+        category: item.category,
+        date,
+      };
+    });
+    setData(transactionsFormatted);
+  };
+
+  useEffect(() => {
+    loadTransactions();
+  }, []);
+
   return (
     <Container>
       <Header>
@@ -62,7 +71,9 @@ export function Dashboard () {
               <UserName>Marco</UserName>
             </User>
           </UserInfo>
-          <Icon name="power" />
+          <LogoutButton onPress={() => {}}>
+            <Icon name="power" />
+          </LogoutButton>
         </UserWrapper>
       </Header>
       <HighlightCards>
