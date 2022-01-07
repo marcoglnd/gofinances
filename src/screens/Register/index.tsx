@@ -33,6 +33,7 @@ import { TransactionTypeButton } from '../../components/Form/TransactionTypeButt
 import { CategorySelectButton } from '../../components/Form/CategorySelectButton';
 
 import { CategorySelect } from '../CategorySelect';
+import { useAuth } from '../../hooks/auth';
 
 interface FormData {
   name: string;
@@ -59,7 +60,9 @@ export function Register() {
   const [transactionType, setTransactionType] = useState('');
   const [categoryModalOpen, setCategoryModalOpen] = useState(false);
 
-  const dataKey = '@gofinance:transactions';
+  const { user } = useAuth();
+
+  const dataKey = `@gofinance:transactions_user:${user.id}`;
 
   const {
     control,

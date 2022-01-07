@@ -27,6 +27,7 @@ import { ptBR } from 'date-fns/locale';
 
 import { useTheme } from 'styled-components';
 import { useFocusEffect } from '@react-navigation/native';
+import { useAuth } from '../../hooks/auth';
 
 interface TransactionData {
   type: 'positive' | 'negative';
@@ -50,6 +51,7 @@ export function Resume () {
   const [selectDate, setSelectedDate] = useState(new Date());
   const [totalByCategories, setTotalByCategories] = useState<CategoryData[]>([]);
   const theme = useTheme();
+  const { user } = useAuth();
 
   function handleChangeDate(action: 'next' | 'prev') {
     if (action === 'next') {
@@ -61,7 +63,7 @@ export function Resume () {
 
   async function loadData() {
     setIsLoading(true);
-    const dataKey = '@gofinance:transactions';
+    const dataKey = `@gofinance:transactions_user:${user.id}`;
     const response = await AsyncStorage.getItem(dataKey);
     const responseFormatted = response ? JSON.parse(response) : [];
     
